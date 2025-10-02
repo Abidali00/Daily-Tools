@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Daily Tools — Converter • Timings • Counters</title>
+  <meta name="description" content="A lightweight single-file web tool: currency, gold price, unit converters, BMI, age, word counter, and prayer times. Ready to host on GitHub Pages." />
+
+  <!-- ====== IMPORTANT: When you get AdSense code, paste it between the <head> tags below. ====== -->
+  <!-- Example placeholder: <!-- INSERT ADSENSE CODE HERE --> -->
+
+  <style>
+    /* Minimal, clean styles for mobile-first layout */
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#06b6d4}
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;background:linear-gradient(180deg,#071021,#071428);color:#e6eef8}
+    .wrap{max-width:920px;margin:18px auto;padding:16px}
+    header{display:flex;align-items:center;gap:12px}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:6px 0 14px;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(1,1fr);gap:12px}
+    @media(min-width:780px){.grid{grid-template-columns:repeat(2,1fr)}}
+    .card{background:var(--card);padding:14px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,.6)}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type="text"], input[type="number"], select, textarea, input[type="date"]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.04);background:transparent;color:inherit}
+    button{padding:10px 12px;border-radius:8px;border:0;background:var(--accent);color:#042028;cursor:pointer}
+    small{color:var(--muted)}
+    nav{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    a.navlink{color:var(--muted);text-decoration:none;font-size:13px}
+    footer{margin-top:18px;color:var(--muted);font-size:13px}
+    .row{display:flex;gap:8px;align-items:center}
+    .tools-title{display:flex;justify-content:space-between;align-items:center}
+    .result{margin-top:8px;padding:8px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,.02),transparent)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Daily Tools — fast &amp; mobile-friendly</h1>
+        <p class="lead">Currency • Gold • Unit converters • BMI • Age • Word Counter • Prayer Times</p>
+      </div>
+    </header>
+
+    <nav>
+      <a class="navlink" href="#home">Home</a>
+      <a class="navlink" href="#tools">Tools</a>
+      <a class="navlink" href="#privacy">Privacy</a>
+      <a class="navlink" href="#contact">Contact</a>
+    </nav>
+
+    <main id="tools" class="grid" style="margin-top:12px">
+      <!-- Currency Converter -->
+      <section class="card">
+        <div class="tools-title">
+          <div><strong>Currency Converter</strong><br><small>Quick convert between common currencies</small></div>
+        </div>
+        <div style="margin-top:8px">
+          <input type="number" id="cur_amount" placeholder="Amount" value="1">
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <select id="cur_from">
+              <option value="USD">USD</option>
+              <option value="SAR">SAR</option>
+              <option value="PKR">PKR</option>
+              <option value="EUR">EUR</option>
+            </select>
+            <select id="cur_to">
+              <option value="PKR">PKR</option>
+              <option value="USD">USD</option>
+              <option value="SAR">SAR</option>
+              <option value="EUR">EUR</option>
+            </select>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <button onclick="convertCurrency()">Convert</button>
+            <button onclick="fetchRates()">Update rates (optional)</button>
+          </div>
+          <div class="result" id="cur_result">Result will appear here</div>
+          <small>NOTE: This site uses a small built-in sample rate table. Click <em>Update rates</em> to fetch live rates (edit fetch URL in template).</small>
+        </div>
+      </section>
+
+      <!-- Gold Price Tool -->
+      <section class="card">
+        <strong>Gold Price (per gram)</strong>
+        <p class="lead" style="margin-top:6px">Enter price per gram (your currency) and quantity to get total.</p>
+        <div>
+          <label>Price per gram</label>
+          <input type="number" id="gold_price" value="10" step="0.01">
+          <label style="margin-top:8px">Quantity (grams)</label>
+          <input type="number" id="gold_qty" value="1">
+          <div style="margin-top:8px;display:flex;gap:8px"><button onclick="calcGold()">Calculate</button>
+          <button onclick="fetchGold()">Fetch live (optional)</button></div>
+          <div class="result" id="gold_result">Total price will appear here</div>
+          <small>To fetch live gold prices: replace fetch URL in template with your chosen metal price API and API key.</small>
+        </div>
+      </section>
+
+      <!-- Unit Converter -->
+      <section class="card">
+        <strong>Unit Converter</strong>
+        <p class="lead">Length, weight, temperature</p>
+        <label>Choose type</label>
+        <select id="uc_type" onchange="renderUnitInputs()">
+          <option value="length">Length</option>
+          <option value="weight">Weight</option>
+          <option value="temp">Temperature</option>
+        </select>
+        <div id="unit_inputs" style="margin-top:8px"></div>
+        <div style="margin-top:8px"><button onclick="convertUnit()">Convert</button></div>
+        <div class="result" id="unit_result"></div>
+      </section>
+
+      <!-- Word & Character Counter -->
+      <section class="card">
+        <strong>Word &amp; Character Counter</strong>
+        <textarea id="wc_text" rows="6" placeholder="Paste or type text here..." oninput="updateWC()"></textarea>
+        <div class="row" style="margin-top:8px">
+          <div><small>Words: <span id="wc_words">0</span></small></div>
+          <div style="margin-left:12px"><small>Characters (with spaces): <span id="wc_chars">0</span></small></div>
+        </div>
+      </section>
+
+      <!-- Age Calculator -->
+      <section class="card">
+        <strong>Age Calculator</strong>
+        <label>Date of Birth</label>
+        <input type="date" id="dob">
+        <div style="margin-top:8px"><button onclick="calcAge()">Calculate Age</button></div>
+        <div class="result" id="age_result"></div>
+      </section>
+
+      <!-- BMI Calculator -->
+      <section class="card">
+        <strong>BMI Calculator</strong>
+        <label>Weight (kg)</label>
+        <input type="number" id="bmi_weight" placeholder="kg">
+        <label style="margin-top:8px">Height (cm)</label>
+        <input type="number" id="bmi_height" placeholder="cm">
+        <div style="margin-top:8px"><button onclick="calcBmi()">Compute BMI</button></div>
+        <div class="result" id="bmi_result"></div>
+      </section>
+
+      <!-- Prayer Times -->
+      <section class="card" style="grid-column:1/-1">
+        <strong>Prayer Times (API)</strong>
+        <p class="lead">Enter city and country, then fetch timings (AlAdhan API used by default)</p>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="pt_city" placeholder="City (e.g., Riyadh)">
+          <input type="text" id="pt_country" placeholder="Country (e.g., Saudi Arabia)">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <select id="pt_method">
+            <option value="8">Gulf Region</option>
+            <option value="2">Islamic Society of North America (ISNA)</option>
+            <option value="3">Egyptian</option>
+            <option value="4">Umm al-Qura (Makkah)</option>
+          </select>
+          <button onclick="getPrayerTimes()">Get Timings</button>
+        </div>
+        <div class="result" id="pt_result">Timings will appear here</div>
+        <small>Note: this template calls the public AlAdhan API. You can change method and parameters in the template. See the privacy section for notes.</small>
+      </section>
+
+    </main>
+
+    <!-- Privacy & Contact (single-file pages using hash navigation) -->
+    <section id="privacy" class="card" style="margin-top:12px">
+      <strong>Privacy Policy (short)</strong>
+      <p class="lead">This demo site collects no personal data by default. If you add analytics or external APIs (currency or prayer APIs), disclose them here and follow AdSense privacy guidelines before applying for ads.</p>
+      <p><small>Example: We may fetch currency and prayer times from third-party APIs. No user personal data is stored on this site unless you enable it.</small></p>
+    </section>
+
+    <section id="contact" class="card" style="margin-top:12px">
+      <strong>Contact</strong>
+      <p class="lead">You can provide an email or contact form. For quick testing add: <code>mailto:you@example.com</code> or link to WhatsApp.</p>
+    </section>
+
+    <footer>
+      <p>Template built for mobile-first hosting. Insert your AdSense code in the <code>&lt;head&gt;</code> when you are ready to connect ads.</p>
+      <p style="margin-top:6px">Made with ❤️ — Edit the file and host on GitHub Pages, Netlify, or any static host.</p>
+    </footer>
+  </div>
+
+  <script>
+    /* ------------------ Utilities ------------------ */
+    const qs = (s)=>document.querySelector(s);
+
+    /* ======== Currency Converter (built-in sample rates + optional fetch) ======== */
+    let sampleRates = { USD:1, SAR:3.75, PKR:278, EUR:0.92 };
+
+    function convertCurrency(){
+      const amount = parseFloat(qs('#cur_amount').value)||0;
+      const from = qs('#cur_from').value;
+      const to = qs('#cur_to').value;
+      const result = (amount / sampleRates[from]) * sampleRates[to];
+      qs('#cur_result').innerText = amount + ' ' + from + ' = ' + result.toFixed(4) + ' ' + to;
+    }
+
+    async function fetchRates(){
+      // Optional: replace URL with a live currency rates API and parse response accordingly.
+      // Example free endpoint (no API key): https://open.er-api.com/v6/latest/USD
+      try{
+        qs('#cur_result').innerText = 'Fetching live rates...';
+        const res = await fetch('https://open.er-api.com/v6/latest/USD');
+        if(!res.ok) throw new Error('Network');
+        const json = await res.json();
+        // json.rates is a map of currency code => rate relative to USD
+        sampleRates = Object.assign({}, json.rates);
+        qs('#cur_result').innerText = 'Rates updated (base USD). Now convert.';
+      }catch(e){
+        qs('#cur_result').innerText = 'Could not fetch live rates (CORS or network). Using local sample rates.';
+      }
+    }
+
+    /* ======== Gold Price ======== */
+    function calcGold(){
+      const price = parseFloat(qs('#gold_price').value)||0;
+      const qty = parseFloat(qs('#gold_qty').value)||0;
+      const total = price * qty;
+      qs('#gold_result').innerText = qty + ' g × ' + price.toFixed(2) + ' = ' + total.toFixed(2);
+    }
+    async function fetchGold(){
+      // Optional: replace with your chosen gold price API (requires API key typically)
+      qs('#gold_result').innerText = 'Live fetch not configured. Edit template to add a metal-price API.';
+    }
+
+    /* ======== Unit Converter ======== */
+    function renderUnitInputs(){
+      const t = qs('#uc_type').value;
+      let html = '';
+      if(t==='length'){
+        html = `\n          <label>Value</label><input id="u_val" type="number" value="1">\n          <div style=\"display:flex;gap:8px;margin-top:8px\">\n            <select id=\"u_from\">\n              <option value=\"m\">m</option><option value=\"km\">km</option><option value=\"mi\">mi</option><option value=\"ft\">ft</option>\n            </select>\n            <select id=\"u_to\">\n              <option value=\"km\">km</option><option value=\"m\">m</option><option value=\"mi\">mi</option><option value=\"ft\">ft</option>\n            </select>\n          </div>`
+      }else if(t==='weight'){
+        html = `\n          <label>Value</label><input id="u_val" type="number" value="1">\n          <div style=\"display:flex;gap:8px;margin-top:8px\">\n            <select id=\"u_from\">\n              <option value=\"kg\">kg</option><option value=\"g\">g</option><option value=\"lb\">lb</option>\n            </select>\n            <select id=\"u_to\">\n              <option value=\"g\">g</option><option value=\"kg\">kg</option><option value=\"lb\">lb</option>\n            </select>\n          </div>`
+      }else{
+        html = `\n          <label>Value</label><input id="u_val" type="number" value="25">\n          <div style=\"display:flex;gap:8px;margin-top:8px\">\n            <select id=\"u_from\">\n              <option value=\"C\">°C</option><option value=\"F\">°F</option><option value=\"K\">K</option>\n            </select>\n            <select id=\"u_to\">\n              <option value=\"F\">°F</option><option value=\"C\">°C</option><option value=\"K\">K</option>\n            </select>\n          </div>`
+      }
+      qs('#unit_inputs').innerHTML = html;
+    }
+    renderUnitInputs();
+
+    function convertUnit(){
+      const t = qs('#uc_type').value;
+      const val = parseFloat(qs('#u_val').value)||0;
+      const from = qs('#u_from').value;
+      const to = qs('#u_to').value;
+      let out = val;
+      if(t==='length'){
+        // convert to meters as base
+        const toMeters = {m:1, km:1000, mi:1609.344, ft:0.3048};
+        out = (val * toMeters[from]) / toMeters[to];
+      }else if(t==='weight'){
+        const toKg = {kg:1, g:0.001, lb:0.45359237};
+        out = (val * toKg[from]) / toKg[to];
+      }else{
+        if(from===to) out = val;
+        else if(from==='C' && to==='F') out = (val*9/5)+32;
+        else if(from==='F' && to==='C') out = (val-32)*5/9;
+        else if(from==='C' && to==='K') out = val + 273.15;
+        else if(from==='K' && to==='C') out = val - 273.15;
+        else if(from==='F' && to==='K') out = (val-32)*5/9 + 273.15;
+        else if(from==='K' && to==='F') out = (val-273.15)*9/5 + 32;
+      }
+      qs('#unit_result').innerText = out.toFixed(4) + ' ' + to;
+    }
+
+    /* ======== Word Counter ======== */
+    function updateWC(){
+      const t = qs('#wc_text').value || '';
+      const chars = t.length;
+      const words = t.trim().length ? t.trim().split(/\s+/).length : 0;
+      qs('#wc_chars').innerText = chars;
+      qs('#wc_words').innerText = words;
+    }
+
+    /* ======== Age ======== */
+    function calcAge(){
+      const dob = qs('#dob').value;
+      if(!dob){qs('#age_result').innerText='Select a date of birth.';return}
+      const d = new Date(dob);
+      const now = new Date();
+      if(d>now){qs('#age_result').innerText='DOB is in the future.';return}
+      let years = now.getFullYear() - d.getFullYear();
+      let months = now.getMonth() - d.getMonth();
+      let days = now.getDate() - d.getDate();
+      if(days<0){ months--; days += new Date(now.getFullYear(), now.getMonth(), 0).getDate(); }
+      if(months<0){ years--; months += 12; }
+      qs('#age_result').innerText = years + ' years, ' + months + ' months, ' + days + ' days.';
+    }
+
+    /* ======== BMI ======== */
+    function calcBmi(){
+      const w = parseFloat(qs('#bmi_weight').value)||0;
+      const hcm = parseFloat(qs('#bmi_height').value)||0;
+      if(!w||!hcm){qs('#bmi_result').innerText='Enter weight and height.';return}
+      const h = hcm/100;
+      const bmi = w / (h*h);
+      let cat = '';
+      if(bmi<18.5) cat = 'Underweight';
+      else if(bmi<25) cat = 'Normal';
+      else if(bmi<30) cat = 'Overweight';
+      else cat = 'Obese';
+      qs('#bmi_result').innerText = 'BMI: ' + bmi.toFixed(2) + ' — ' + cat;
+    }
+
+    /* ======== Prayer Times (AlAdhan API) ======== */
+    async function getPrayerTimes(){
+      const city = qs('#pt_city').value || '';
+      const country = qs('#pt_country').value || '';
+      const method = qs('#pt_method').value || '8';
+      if(!city || !country){qs('#pt_result').innerText='Enter city and country.';return}
+      qs('#pt_result').innerText = 'Fetching prayer times...';
+      try{
+        const address = encodeURIComponent(city + ',' + country);
+        const url = `https://api.aladhan.com/v1/timingsByAddress?address=${address}&method=${method}`;
+        const res = await fetch(url);
+        if(!res.ok) throw new Error('Network');
+        const json = await res.json();
+        if(json.code!==200){qs('#pt_result').innerText='API error';return}
+        const timings = json.data.timings;
+        let html = '<strong>Timings for ' + (json.data.date.readable || (city+','+country)) + '</strong>\n<ul style="padding-left:16px">';
+        ['Fajr','Sunrise','Dhuhr','Asr','Maghrib','Isha'].forEach(k=>{ html += `<li>${k}: ${timings[k]}</li>` });
+        html += '</ul>';
+        qs('#pt_result').innerHTML = html;
+      }catch(e){
+        qs('#pt_result').innerText = 'Could not fetch prayer times. (Network/CORS)';
+      }
+    }
+
+    /* ======== Small helper to handle hash navigation to sections (privacy/contact) ======== */
+    window.addEventListener('load',()=>{
+      if(location.hash) location.hash && document.querySelector(location.hash)?.scrollIntoView();
+    });
+  </script>
+</body>
+</html>
